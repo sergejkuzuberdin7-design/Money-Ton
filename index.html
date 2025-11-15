@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TON Clicker Game</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/tonconnect-ui"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .click-area {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .click-button {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff6b6b, #ffd93d);
+            border: none;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            margin: 0 auto;
+        }
+
+        .click-button:active {
+            transform: scale(0.95);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.6);
+        }
+
+        .click-power {
+            font-size: 14px;
+            margin-top: 5px;
+            opacity: 0.8;
+        }
+
+        .sections {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 10px;
+        }
+
+        .section-btn {
+            background: none;
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .section-btn.active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .content-section {
+            display: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .upgrade-item, .booster-item {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .upgrade-info h4, .booster-info h4 {
+            margin-bottom: 5px;
+            color: #ffd700;
+        }
+
+        .buy-btn {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .buy-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .wallet-section {
+            text-align: center;
+        }
+
+        .wallet-info {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .wallet-address {
+            font-family: monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px;
+            border-radius: 5px;
+            margin: 10px 0;
+            word-break: break-all;
+        }
+
+        .action-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 5px;
+            width: calc(50% - 10px);
+            font-weight: bold;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 25px;
+            border-radius: 20px;
+            max-width: 350px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal h3 {
+            margin-bottom: 15px;
+            color: #ffd700;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .confirm-btn {
+            background: #4ecdc4;
+            color: white;
+        }
+
+        .cancel-btn {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4ecdc4;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1001;
+            display: none;
+        }
+
+        .ad-banner {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 10px 0;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+        }
+
+        .watch-ad-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ffd93d);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .click-button {
+                width: 150px;
+                height: 150px;
+                font-size: 20px;
+            }
+            
+            .stat-card {
+                padding: 10px;
+            }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4ecdc4, #44a08d);
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 TON Clicker</h1>
+            <div class="stats">
+                <div class="stat-card">
+                    <div>Coins</div>
+                    <div class="stat-value" id="coins">0</div>
+                </div>
+                <div class="stat-card">
+                    <div>TON Balance</div>
+                    <div class="stat-value" id="tonBalance">0</div>
+                </div>
+                <div class="stat-card">
+                    <div>Level</div>
+                    <div class="stat-value" id="level">1</div>
+                </div>
+                <div class="stat-card">
+                    <div>Power</div>
+                    <div class="stat-value" id="clickPower">1</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="click-area">
+            <button class="click-button" id="clickBtn">
+                💎 CLICK! 💎
+                <div class="click-power" id="clickPowerText">+1 per click</div>
+            </button>
+        </div>
+
+        <div class="ad-banner">
+            <p>🎥 Watch ad for 2x coins for 30 seconds!</p>
+            <button class="watch-ad-btn" id="watchAdBtn">Watch Ad (+500 coins)</button>
+        </div>
+
+        <div class="sections">
+            <button class="section-btn active" data-section="upgrades">🛠 Upgrades</button>
+            <button class="section-btn" data-section="boosters">⚡ Boosters</button>
+            <button class="section-btn" data-section="wallet">💰 Wallet</button>
+            <button class="section-btn" data-section="achievements">🏆 Achievements</button>
+        </div>
+
+        <div class="content-section active" id="upgrades-section">
+            <h3>🛠 Upgrades</h3>
+            <div id="upgrades-list">
+                <!-- Upgrades will be loaded here -->
+            </div>
+        </div>
+
+        <div class="content-section" id="boosters-section">
+            <h3>⚡ Boosters</h3>
+            <div id="boosters-list">
+                <!-- Boosters will be loaded here -->
+            </div>
+        </div>
+
+        <div class="content-section" id="wallet-section">
+            <div class="wallet-section">
+                <h3>💰 TON Wallet</h3>
+                <div class="wallet-info">
+                    <div id="walletStatus">Not connected</div>
+                    <div class="wallet-address" id="walletAddress">-</div>
+                    <div>Balance: <span id="walletBalance">0</span> TON</div>
+                </div>
+                <div id="connectWalletBtn" class="action-btn">Connect Wallet</div>
+                <div class="action-buttons">
+                    <button class="action-btn" id="depositBtn">Deposit</button>
+                    <button class="action-btn" id="withdrawBtn">Withdraw</button>
+                </div>
+                <div class="action-buttons">
+                    <button class="action-btn" id="convertToTonBtn">Convert to TON</button>
+                    <button class="action-btn" id="historyBtn">History</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section" id="achievements-section">
+            <h3>🏆 Achievements</h3>
+            <div id="achievements-list">
+                <!-- Achievements will be loaded here -->
+            </div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="levelProgress" style="width: 0%"></div>
+        </div>
+        <div style="text-align: center; font-size: 12px; opacity: 0.8;">
+            Next Level: <span id="nextLevelProgress">0/100</span>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="depositModal">
+        <div class="modal-content">
+            <h3>💰 Deposit TON</h3>
+            <p>Send TON to this address:</p>
+            <div class="wallet-address" id="depositAddress">Loading...</div>
+            <p style="font-size: 12px; margin: 10px 0;">Minimum: 0.1 TON</p>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel-btn" id="closeDepositModal">Close</button>
+                <button class="modal-btn confirm-btn" id="copyDepositAddress">Copy</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="withdrawModal">
+        <div class="modal-content">
+            <h3>💸 Withdraw TON</h3>
+            <input type="text" id="withdrawAmount" placeholder="Amount in TON">
+            <input type="text" id="withdrawAddress" placeholder="TON Address">
+            <p style="font-size: 12px;">Available: <span id="availableBalance">0</span> TON</p>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel-btn" id="closeWithdrawModal">Cancel</button>
+                <button class="modal-btn confirm-btn" id="confirmWithdraw">Withdraw</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="convertModal">
+        <div class="modal-content">
+            <h3>🔄 Convert Coins</h3>
+            <p>Exchange Rate: 1,000,000 coins = 0.000001 TON</p>
+            <input type="number" id="convertAmount" placeholder="Coins amount">
+            <p>You'll receive: <span id="convertResult">0</span> TON</p>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel-btn" id="closeConvertModal">Cancel</button>
+                <button class="modal-btn confirm-btn" id="confirmConvert">Convert</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // Game state
+        let gameState = {
+            coins: 0,
+            tonBalance: 0,
+            level: 1,
+            experience: 0,
+            clickPower: 1,
+            autoClickPower: 0,
+            upgrades: {},
+            boosters: {},
+            lastSave: Date.now()
+        };
+
+        // TON Connect
+        let tonConnectUI;
+        let wallet = null;
+
+        // WebSocket
+        let ws = null;
+
+        // Initialize the game
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeGame();
+            initializeTONConnect();
+            initializeWebSocket();
+            setupEventListeners();
+            loadGameState();
+            startGameLoop();
+        });
+
+        function initializeGame() {
+            // Initialize upgrades
+            gameState.upgrades = {
+                clickPower: { level: 0, cost: 50, power: 1 },
+                autoClicker: { level: 0, cost: 100, power: 1 },
+                megaClick: { level: 0, cost: 500, power: 5 },
+                tonMiner: { level: 0, cost: 1000, power: 10 },
+                cosmicBoost: { level: 0, cost: 5000, power: 50 }
+            };
+
+            // Initialize boosters
+            gameState.boosters = {
+                doubleCoins: { active: false, duration: 0, cost: 200 },
+                turboClick: { active: false, duration: 0, cost: 300 },
+                autoMaster: { active: false, duration: 0, cost: 500 },
+                luckyStrike: { active: false, duration: 0, cost: 800 }
+            };
+
+            updateUI();
+        }
+
+        function initializeTONConnect() {
+            tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+                manifestUrl: 'https://yourdomain.com/tonconnect-manifest.json',
+                buttonRootId: 'connectWalletBtn'
+            });
+
+            tonConnectUI.connectionRestored.then(() => {
+                console.log('Connection restored');
+            });
+
+            tonConnectUI.onStatusChange(walletInfo => {
+                wallet = walletInfo;
+                updateWalletUI();
+                
+                if (wallet) {
+                    // Send wallet info to backend
+                    authenticateUser(walletInfo);
+                }
+            });
+        }
+
+        function initializeWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}`;
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = function() {
+                console.log('WebSocket connected');
+                showNotification('Connected to game server', 'success');
+            };
+            
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            };
+            
+            ws.onclose = function() {
+                console.log('WebSocket disconnected');
+                setTimeout(initializeWebSocket, 3000);
+            };
+        }
+
+        function setupEventListeners() {
+            // Click button
+            document.getElementById('clickBtn').addEventListener('click', handleClick);
+            
+            // Section buttons
+            document.querySelectorAll('.section-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const section = this.getAttribute('data-section');
+                    switchSection(section);
+                });
+            });
+            
+            // Wallet actions
+            document.getElementById('depositBtn').addEventListener('click', showDepositModal);
+            document.getElementById('withdrawBtn').addEventListener('click', showWithdrawModal);
+            document.getElementById('convertToTonBtn').addEventListener('click', showConvertModal);
+            document.getElementById('historyBtn').addEventListener('click', showHistory);
+            
+            // Modal actions
+            document.getElementById('closeDepositModal').addEventListener('click', closeDepositModal);
+            document.getElementById('copyDepositAddress').addEventListener('click', copyDepositAddress);
+            document.getElementById('closeWithdrawModal').addEventListener('click', closeWithdrawModal);
+            document.getElementById('confirmWithdraw').addEventListener('click', confirmWithdraw);
+            document.getElementById('closeConvertModal').addEventListener('click', closeConvertModal);
+            document.getElementById('confirmConvert').addEventListener('click', confirmConvert);
+            
+            // Ad button
+            document.getElementById('watchAdBtn').addEventListener('click', watchAd);
+            
+            // Convert amount calculation
+            document.getElementById('convertAmount').addEventListener('input', calculateConvert);
+        }
+
+        function handleClick() {
+            let coinsEarned = gameState.clickPower;
+            
+            // Apply boosters
+            if (gameState.boosters.doubleCoins.active) {
+                coinsEarned *= 2;
+            }
+            if (gameState.boosters.turboClick.active) {
+                coinsEarned *= 1.5;
+            }
+            
+            gameState.coins += coinsEarned;
+            addExperience(1);
+            
+            // Visual feedback
+            const clickBtn = document.getElementById('clickBtn');
+            clickBtn.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                clickBtn.style.transform = 'scale(1)';
+            }, 100);
+            
+            updateUI();
+            saveGameState();
+        }
+
+        function addExperience(amount) {
+            gameState.experience += amount;
+            const expNeeded = gameState.level * 100;
+            
+            if (gameState.experience >= expNeeded) {
+                gameState.level++;
+                gameState.experience = 0;
+                showNotification(`🎉 Level up! Now level ${gameState.level}`, 'success');
+            }
+            
+            updateLevelProgress();
+        }
+
+        function updateLevelProgress() {
+            const expNeeded = gameState.level * 100;
+            const progress = (gameState.experience / expNeeded) * 100;
+            document.getElementById('levelProgress').style.width = `${progress}%`;
+            document.getElementById('nextLevelProgress').textContent = 
+                `${gameState.experience}/${expNeeded}`;
+        }
+
+        function switchSection(section) {
+            // Update active button
+            document.querySelectorAll('.section-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-section="${section}"]`).classList.add('active');
+            
+            // Update active section
+            document.querySelectorAll('.content-section').forEach(sect => {
+                sect.classList.remove('active');
+            });
+            document.getElementById(`${section}-section`).classList.add('active');
+            
+            // Load section content
+            loadSectionContent(section);
+        }
+
+        function loadSectionContent(section) {
+            switch(section) {
+                case 'upgrades':
+                    loadUpgrades();
+                    break;
+                case 'boosters':
+                    loadBoosters();
+                    break;
+                case 'achievements':
+                    loadAchievements();
+                    break;
+            }
+        }
+
+        function loadUpgrades() {
+            const container = document.getElementById('upgrades-list');
+            container.innerHTML = '';
+            
+            Object.entries(gameState.upgrades).forEach(([key, upgrade]) => {
+                const item = document.createElement('div');
+                item.className = 'upgrade-item';
+                item.innerHTML = `
+                    <div class="upgrade-info">
+                        <h4>${getUpgradeName(key)}</h4>
+                        <div>Level: ${upgrade.level}</div>
+                        <div>+${upgrade.power} power</div>
+                    </div>
+                    <button class="buy-btn" onclick="buyUpgrade('${key}')" 
+                            ${gameState.coins < upgrade.cost ? 'disabled' : ''}>
+                        Buy - ${upgrade.cost} coins
+                    </button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function loadBoosters() {
+            const container = document.getElementById('boosters-list');
+            container.innerHTML = '';
+            
+            Object.entries(gameState.boosters).forEach(([key, booster]) => {
+                const activeText = booster.active ? 
+                    `Active (${Math.ceil(booster.duration / 1000)}s)` : '';
+                
+                const item = document.createElement('div');
+                item.className = 'booster-item';
+                item.innerHTML = `
+                    <div class="booster-info">
+                        <h4>${getBoosterName(key)}</h4>
+                        <div>${getBoosterDescription(key)}</div>
+                        <div style="color: #4ecdc4;">${activeText}</div>
+                    </div>
+                    <button class="buy-btn" onclick="activateBooster('${key}')" 
+                            ${gameState.coins < booster.cost || booster.active ? 'disabled' : ''}>
+                        ${booster.cost} coins
+                    </button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function loadAchievements() {
+            const container = document.getElementById('achievements-list');
+            // Achievement logic would be implemented here
+            container.innerHTML = '<p>Achievements coming soon!</p>';
+        }
+
+        function getUpgradeName(key) {
+            const names = {
+                clickPower: '💪 Click Power',
+                autoClicker: '🤖 Auto Clicker',
+                megaClick: '⚡ Mega Click',
+                tonMiner: '⛏️ TON Miner',
+                cosmicBoost: '🚀 Cosmic Boost'
+            };
+            return names[key] || key;
+        }
+
+        function getBoosterName(key) {
+            const names = {
+                doubleCoins: '💰 Double Coins',
+                turboClick: '🌀 Turbo Click',
+                autoMaster: '🤖 Auto Master',
+                luckyStrike: '🍀 Lucky Strike'
+            };
+            return names[key] || key;
+        }
+
+        function getBoosterDescription(key) {
+            const descriptions = {
+                doubleCoins: '2x coins for 30 seconds',
+                turboClick: '1.5x click power for 45 seconds',
+                autoMaster: '3x auto click for 60 seconds',
+                luckyStrike: 'Chance for 10x coins for 2 minutes'
+            };
+            return descriptions[key] || '';
+        }
+
+        function buyUpgrade(upgradeKey) {
+            const upgrade = gameState.upgrades[upgradeKey];
+            
+            if (gameState.coins >= upgrade.cost) {
+                gameState.coins -= upgrade.cost;
+                upgrade.level++;
+                
+                // Apply upgrade effect
+                switch(upgradeKey) {
+                    case 'clickPower':
+                        gameState.clickPower += upgrade.power;
+                        break;
+                    case 'autoClicker':
+                        gameState.autoClickPower += upgrade.power;
+                        break;
+                    case 'megaClick':
+                        gameState.clickPower += upgrade.power;
+                        break;
+                    case 'tonMiner':
+                        gameState.autoClickPower += upgrade.power;
+                        break;
+                    case 'cosmicBoost':
+                        gameState.clickPower += upgrade.power;
+                        gameState.autoClickPower += upgrade.power;
+                        break;
+                }
+                
+                // Increase cost for next level
+                upgrade.cost = Math.floor(upgrade.cost * 1.5);
+                
+                showNotification(`✅ ${getUpgradeName(upgradeKey)} upgraded to level ${upgrade.level}`, 'success');
+                updateUI();
+                loadUpgrades();
+                saveGameState();
+            }
+        }
+
+        function activateBooster(boosterKey) {
+            const booster = gameState.boosters[boosterKey];
+            
+            if (gameState.coins >= booster.cost && !booster.active) {
+                gameState.coins -= booster.cost;
+                booster.active = true;
+                booster.duration = getBoosterDuration(boosterKey);
+                
+                showNotification(`🎯 ${getBoosterName(boosterKey)} activated!`, 'success');
+                updateUI();
+                loadBoosters();
+                saveGameState();
+            }
+        }
+
+        function getBoosterDuration(boosterKey) {
+            const durations = {
+                doubleCoins: 30000, // 30 seconds
+                turboClick: 45000,  // 45 seconds
+                autoMaster: 60000,  // 60 seconds
+                luckyStrike: 120000 // 120 seconds
+            };
+            return durations[boosterKey] || 30000;
+        }
+
+        function updateBoosterTimers() {
+            let needsUpdate = false;
+            
+            Object.values(gameState.boosters).forEach(booster => {
+                if (booster.active) {
+                    booster.duration -= 1000;
+                    if (booster.duration <= 0) {
+                        booster.active = false;
+                        booster.duration = 0;
+                        needsUpdate = true;
+                    }
+                }
+            });
+            
+            if (needsUpdate) {
+                loadBoosters();
+            }
+        }
+
+        function autoClick() {
+            if (gameState.autoClickPower > 0) {
+                let autoCoins = gameState.autoClickPower;
+                
+                // Apply boosters
+                if (gameState.boosters.doubleCoins.active) {
+                    autoCoins *= 2;
+                }
+                if (gameState.boosters.autoMaster.active) {
+                    autoCoins *= 3;
+                }
+                
+                gameState.coins += autoCoins;
+                addExperience(autoCoins * 0.1);
+                
+                // Only update UI occasionally to save performance
+                if (Date.now() - gameState.lastSave > 1000) {
+                    updateUI();
+                }
+            }
+        }
+
+        function startGameLoop() {
+            setInterval(() => {
+                autoClick();
+                updateBoosterTimers();
+                
+                // Auto-save every 10 seconds
+                if (Date.now() - gameState.lastSave > 10000) {
+                    saveGameState();
+                }
+            }, 1000);
+        }
+
+        function updateUI() {
+            document.getElementById('coins').textContent = formatNumber(gameState.coins);
+            document.getElementById('level').textContent = gameState.level;
+            document.getElementById('clickPower').textContent = gameState.clickPower;
+            document.getElementById('clickPowerText').textContent = `+${gameState.clickPower} per click`;
+            document.getElementById('tonBalance').textContent = gameState.tonBalance.toFixed(6);
+            
+            updateLevelProgress();
+        }
+
+        function updateWalletUI() {
+            const statusEl = document.getElementById('walletStatus');
+            const addressEl = document.getElementById('walletAddress');
+            const balanceEl = document.getElementById('walletBalance');
+            
+            if (wallet) {
+                statusEl.textContent = 'Connected';
+                addressEl.textContent = shortenAddress(wallet.account.address);
+                balanceEl.textContent = '0'; // Would be updated from backend
+            } else {
+                statusEl.textContent = 'Not connected';
+                addressEl.textContent = '-';
+                balanceEl.textContent = '0';
+            }
+        }
+
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(2) + 'M';
+            }
+            if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return Math.floor(num);
+        }
+
+        function shortenAddress(address) {
+            return address.substring(0, 6) + '...' + address.substring(address.length - 4);
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            notification.style.background = type === 'success' ? '#4ecdc4' : 
+                                           type === 'error' ? '#ff6b6b' : '#667eea';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Modal functions
+        function showDepositModal() {
+            if (!wallet) {
+                showNotification('Please connect your wallet first', 'error');
+                return;
+            }
+            document.getElementById('depositModal').style.display = 'flex';
+            // In real implementation, this would come from backend
+            document.getElementById('depositAddress').textContent = wallet.account.address;
+        }
+
+        function closeDepositModal() {
+            document.getElementById('depositModal').style.display = 'none';
+        }
+
+        function copyDepositAddress() {
+            const address = document.getElementById('depositAddress').textContent;
+            navigator.clipboard.writeText(address);
+            showNotification('Address copied to clipboard!', 'success');
+        }
+
+        function showWithdrawModal() {
+            if (!wallet) {
+                showNotification('Please connect your wallet first', 'error');
+                return;
+            }
+            document.getElementById('withdrawModal').style.display = 'flex';
+            document.getElementById('availableBalance').textContent = gameState.tonBalance.toFixed(6);
+        }
+
+        function closeWithdrawModal() {
+            document.getElementById('withdrawModal').style.display = 'none';
+        }
+
+        function confirmWithdraw() {
+            const amount = parseFloat(document.getElementById('withdrawAmount').value);
+            const address = document.getElementById('withdrawAddress').value;
+            
+            if (!amount || amount <= 0) {
+                showNotification('Please enter valid amount', 'error');
+                return;
+            }
+            
+            if (amount > gameState.tonBalance) {
+                showNotification('Insufficient balance', 'error');
+                return;
+            }
+            
+            if (!address) {
+                showNotification('Please enter TON address', 'error');
+                return;
+            }
+            
+            // Send withdrawal request to backend
+            fetch('/api/withdraw', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount, address })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Withdrawal request submitted!', 'success');
+                    closeWithdrawModal();
+                } else {
+                    showNotification(data.error || 'Withdrawal failed', 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Withdrawal failed: ' + error, 'error');
+            });
+        }
+
+        function showConvertModal() {
+            document.getElementById('convertModal').style.display = 'flex';
+            calculateConvert();
+        }
+
+        function closeConvertModal() {
+            document.getElementById('convertModal').style.display = 'none';
+        }
+
+        function calculateConvert() {
+            const coins = parseInt(document.getElementById('convertAmount').value) || 0;
+            const ton = coins * 0.000001; // 1M coins = 0.000001 TON
+            document.getElementById('convertResult').textContent = ton.toFixed(8);
+        }
+
+        function confirmConvert() {
+            const coins = parseInt(document.getElementById('convertAmount').value) || 0;
+            
+            if (coins <= 0) {
+                showNotification('Please enter valid amount', 'error');
+                return;
+            }
+            
+            if (coins > gameState.coins) {
+                showNotification('Not enough coins', 'error');
+                return;
+            }
+            
+            if (coins < 1000000) {
+                showNotification('Minimum 1,000,000 coins required', 'error');
+                return;
+            }
+            
+            const tonAmount = coins * 0.000001;
+            gameState.coins -= coins;
+            gameState.tonBalance += tonAmount;
+            
+            showNotification(`Converted ${formatNumber(coins)} coins to ${tonAmount.toFixed(6)} TON`, 'success');
+            updateUI();
+            closeConvertModal();
+            saveGameState();
+        }
+
+        function watchAd() {
+            // Simulate ad watching
+            showNotification('🎬 Thanks for watching! +500 coins', 'success');
+            gameState.coins += 500;
+            updateUI();
+            saveGameState();
+        }
+
+        function showHistory() {
+            // Implementation for transaction history
+            showNotification('Transaction history coming soon!', 'info');
+        }
+
+        function authenticateUser(walletInfo) {
+            fetch('/api/auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    address: walletInfo.account.address,
+                    wallet: walletInfo.device.appName
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadGameState();
+                }
+            });
+        }
+
+        function loadGameState() {
+            fetch('/api/game/state')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Object.assign(gameState, data.gameState);
+                        updateUI();
+                        loadUpgrades();
+                        loadBoosters();
+                    }
+                })
+                .catch(error => {
+                    console.error('Failed to load game state:', error);
+                });
+        }
+
+        function saveGameState() {
+            gameState.lastSave = Date.now();
+            
+            fetch('/api/game/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(gameState)
+            })
+            .catch(error => {
+                console.error('Failed to save game state:', error);
+            });
+        }
+
+        function handleWebSocketMessage(data) {
+            switch(data.type) {
+                case 'balanceUpdate':
+                    gameState.tonBalance = data.balance;
+                    updateUI();
+                    break;
+                case 'transactionUpdate':
+                    showNotification(`New transaction: ${data.amount} TON`, 'info');
+                    break;
+                case 'gameUpdate':
+                    Object.assign(gameState, data.gameState);
+                    updateUI();
+                    break;
+            }
+        }
+
+        // Make functions global for HTML onclick
+        window.buyUpgrade = buyUpgrade;
+        window.activateBooster = activateBooster;
+    </script>
+</body>
+</html>
